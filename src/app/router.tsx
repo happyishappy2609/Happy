@@ -2,9 +2,9 @@ import { lazy, type ReactNode } from 'react'
 import { createHashRouter, Navigate, RouterProvider, useLocation } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { LoginPage } from '@/pages/LoginPage'
-import { DashboardPage } from '@/pages/DashboardPage'
 import { useAppStore } from '@/store/useAppStore'
 
+const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 const ProjectsPage = lazy(() => import('@/pages/ProjectsPage'))
 const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage'))
 const QualityPage = lazy(() => import('@/pages/QualityPage'))

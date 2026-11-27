@@ -38,6 +38,11 @@ function ChartLegend({ items }: { items: { label: string; color: string; dashed?
   )
 }
 
+const NumTip = makeTooltip((_n, v) => String(v))
+const ScoreTip = makeTooltip((_n, v) => `${v.toFixed(1)}%`)
+const HoursTip = makeTooltip((_n, v) => `${v}h`)
+const RevTip = makeTooltip((n, v) => (n === 'Quality score' ? `${v.toFixed(1)}%` : `${v}`))
+
 export default function AnalyticsPage() {
   const projects = useAppStore((s) => s.projects)
   const issues = useAppStore((s) => s.issues)
@@ -180,10 +185,6 @@ export default function AnalyticsPage() {
 
   const pct = (a: number, b: number) => (b ? ((a - b) / Math.abs(b)) * 100 : 0)
   const cmp = `vs previous ${r.days}d`
-  const NumTip = makeTooltip((_n, v) => String(v))
-  const ScoreTip = makeTooltip((_n, v) => `${v.toFixed(1)}%`)
-  const HoursTip = makeTooltip((_n, v) => `${v}h`)
-  const RevTip = makeTooltip((n, v) => (n === 'Quality score' ? `${v.toFixed(1)}%` : `${v}`))
 
   return (
     <div>

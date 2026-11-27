@@ -35,6 +35,8 @@ import { LANGUAGES, langName } from '@/utils/languages'
 import { isOpen, SEVERITY_ORDER } from '@/utils/quality'
 import { hashString } from '@/utils/random'
 
+const HistTip = makeTooltip((_n, v) => `${v.toFixed(1)}%`, (label, payload) => `${formatDate(String(label))} · ${payload[0]?.payload?.label ?? ''}`)
+
 export default function ProjectDetailPage() {
   const { id = '' } = useParams()
   const [params, setParams] = useSearchParams()
@@ -117,7 +119,6 @@ export default function ProjectDetailPage() {
   })
 
   const historyData = project.qualityHistory.map((h) => ({ date: h.date, score: h.score, label: h.label }))
-  const HistTip = makeTooltip((_n, v) => `${v.toFixed(1)}%`, (label, payload) => `${formatDate(String(label))} · ${payload[0]?.payload?.label ?? ''}`)
 
   const team = [
     ...(pm ? [{ m: pm, role: 'Project Manager' }] : []),

@@ -9,15 +9,16 @@ export interface TrendPoint {
   [k: string]: number | string | undefined
 }
 
+const Tip = makeTooltip(
+  (_n, v) => `${v.toFixed(1)}%`,
+  (label) => formatDate(String(label), { weekday: 'short', month: 'short', day: 'numeric' }),
+)
+
 export function QualityTrendChart({ data, target = 95, height = 240, series }: { data: TrendPoint[]; target?: number; height?: number; series?: { key: string; name: string; color: string }[] }) {
   const lines = series ?? [{ key: 'score', name: 'Quality Score', color: 'var(--chart-1)' }]
   const values = data.flatMap((d) => lines.map((l) => Number(d[l.key] ?? NaN))).filter((v) => !Number.isNaN(v))
   const min = Math.floor(Math.min(target, ...values) - 1)
   const max = Math.ceil(Math.max(target, ...values) + 0.5)
-  const Tip = makeTooltip(
-    (_n, v) => `${v.toFixed(1)}%`,
-    (label) => formatDate(String(label), { weekday: 'short', month: 'short', day: 'numeric' }),
-  )
   return (
     <div style={{ height }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">

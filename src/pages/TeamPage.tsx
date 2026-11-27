@@ -45,6 +45,8 @@ function workloadTone(w: number) {
   return w > 85 ? 'error' : w > 70 ? 'warning' : 'success'
 }
 
+const TrendTip = makeTooltip((n, v) => (n === 'Quality' ? `${v.toFixed(1)}%` : formatCompact(v)))
+
 export default function TeamPage() {
   const [params, setParams] = useSearchParams()
   const team = useAppStore((s) => s.team)
@@ -227,7 +229,6 @@ function MemberDrawer({ member, onClose, projectsOf }: { member?: TeamMember; on
   const maxCat = Math.max(1, ...byCat.map(([, v]) => v))
   const resolvedBy = issues.filter((i) => i.history.some((h) => h.by === member.id && /resolv|Accepted|Edited/i.test(h.action))).slice(0, 5)
   const trend = member.qualityTrend.map((v, i) => ({ month: MONTHS[i] ?? '', score: v, volume: Math.round(member.wordsThisMonth * (0.72 + i * 0.06)) || member.reviewsCompleted * 1000 }))
-  const TrendTip = makeTooltip((n, v) => (n === 'Quality' ? `${v.toFixed(1)}%` : formatCompact(v)))
   const memberActivity = activities.filter((a) => a.actorId === member.id).slice(0, 4)
 
   return (

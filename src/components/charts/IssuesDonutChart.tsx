@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { cn } from '@/utils/cn'
 import { SERIES, makeTooltip } from './ChartTooltip'
@@ -13,7 +13,7 @@ export function IssuesDonutChart({ data, centerLabel = 'Issues', height = 200, v
   const [active, setActive] = useState<number | null>(null)
   const total = data.reduce((s, d) => s + d.value, 0)
   const colored = data.map((d, i) => ({ ...d, color: d.color ?? SERIES[i % SERIES.length] }))
-  const Tip = makeTooltip((_n, v) => `${v}${valueSuffix}${showPercent && total ? ` · ${Math.round((v / total) * 100)}%` : ''}`, () => null)
+  const Tip = useMemo(() => makeTooltip((_n, v) => `${v}${valueSuffix}${showPercent && total ? ` · ${Math.round((v / total) * 100)}%` : ''}`, () => null), [valueSuffix, showPercent, total])
   const focus = active !== null ? colored[active] : null
   return (
     <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
