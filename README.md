@@ -28,6 +28,7 @@ Sign in with the pre-filled demo credentials (any password works) — the worksp
 | --- | --- | --- |
 | Overview | `/dashboard` | 6 KPIs with period comparison and sparklines, quality trend vs. target, issue mix, pinned projects, risk ranking, activity feed, 7/30/90-day and custom ranges |
 | Projects | `/projects` | Status tabs, 5 filters, search, sortable/paginated table (cards on mobile), create-project form with validation, file import |
+| String Keys | `/keys` | Resource keys per project (namespaced, e.g. `checkout.title`) with one value per target language: add key + initial values, inline edit in the grid, key drawer with per-language editors and TM suggestions, max-length limits (checked by QA), rename/delete, filters (missing / complete / with issues / namespace), import JSON/CSV/XLIFF by key, export flat or nested JSON per language and CSV |
 | Project detail | `/projects/:id` | Header + actions (Run AI QA, export CSV/XLSX/JSON/PDF, assign reviewer, edit, pin, status, delete), 7 tabs: overview (gauge, timeline, language status, team), segments workbench, QA history, issues, reviewers, files, activity |
 | AI Quality | `/quality` | Scan configuration (12 rules, 3 sensitivities, options), staged progress, QA report, findings list with filters + detail panel, accept / edit / resolve / ignore (with reason) / assign, segment review with inline editing, TM matches and glossary checks |
 | Issues | `/issues` | KPIs, severity/status/category/project/language filters, sorting, bulk resolve & assign, detail drawer with history |

@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test'
 import { signIn, trackErrors } from './helpers'
 
-const ROUTES = ['/dashboard', '/projects', '/projects/p-nova-ecom', '/quality', '/issues', '/team', '/terminology', '/memory', '/analytics', '/clients', '/clients/c-nova', '/integrations', '/settings']
+const ROUTES = ['/dashboard', '/projects', '/keys', '/projects/p-nova-ecom', '/quality', '/issues', '/team', '/terminology', '/memory', '/analytics', '/clients', '/clients/c-nova', '/integrations', '/settings']
 
 test('every page loads without errors', async ({ page }) => {
   const errors = trackErrors(page)
@@ -76,4 +76,37 @@ test('reset demo restores seeded data', async ({ page }) => {
   await page.getByRole('button', { name: 'Reset demo' }).click()
   await expect(page).toHaveURL(/dashboard/)
   await expect(page.getByRole('region', { name: 'Key metrics' })).toContainText('18')
+})
+
+test('string keys: create a key, add values inline and in the drawer', async ({ page }) => {
+  await signIn(page)
+  await page.goto('/#/keys?project=p-aurora-help')
+  await page.getByRole('button', { name: 'Add key' }).click()
+  const dialog = page.getByRole('dialog')
+  await dialog.getByRole('button', { name: 'Create key' }).click()
+  await expect(dialog.getByText('Key is required.')).toBeVisible()
+  await dialog.getByLabel('Key', { exact: true }).fill('help.reset_title')
+  await dialog.getByLabel('Source text (English)').fill('Reset your device')
+  await dialog.getByLabel(/German$/).fill('Gerät zurücksetzen')
+  await dialog.getByRole('button', { name: 'Create key' }).click()
+  await expect(page.getByText('String key created.')).toBeVisible()
+
+  // The new key opens in the drawer: add the French value there.
+  const drawer = page.getByRole('dialog')
+  await drawer.getByLabel('French value for help.reset_title').fill('Réinitialiser votre appareil')
+  await drawer.getByRole('button', { name: 'Save French value' }).click()
+  await expect(page.getByText('Value saved.').first()).toBeVisible()
+  await page.keyboard.press('Escape')
+
+  // Add the Japanese value inline in the grid.
+  await page.getByPlaceholder('Search keys or values…').fill('reset_title')
+  await page.getByRole('button', { name: 'Add value' }).click()
+  await page.getByLabel('Japanese value for help.reset_title').fill('デバイスをリセット')
+  await page.keyboard.press('Enter')
+  await expect(page.getByText('デバイスをリセット')).toBeVisible()
+  await expect(page.getByText('3/3 languages')).toBeVisible()
+
+  await page.reload()
+  await page.getByPlaceholder('Search keys or values…').fill('reset_title')
+  await expect(page.getByText('Réinitialiser votre appareil')).toBeVisible()
 })

@@ -136,7 +136,10 @@ export function SegmentWorkbench({ projectId, initialLang, focusSegmentId, onOpe
                   className={cn('grid cursor-pointer grid-cols-[40px_1fr] gap-x-3 gap-y-1.5 border-b border-border px-3 py-2.5 text-[13.5px] leading-relaxed transition-colors md:grid-cols-[48px_1fr_1fr_72px]', isSel ? 'bg-primary-soft/50' : 'hover:bg-hover', top && !isSel && 'bg-error-soft/20')}
                 >
                   <span className={cn('pt-0.5 text-[12px] text-fg-3 tabular', top && 'font-medium text-error')}>{s.index}</span>
-                  <div className="min-w-0 text-fg">{top ? highlight(s.source, top.sourceSpan, 'hl-source') : s.source}</div>
+                  <div className="min-w-0 text-fg">
+                    {top ? highlight(s.source, top.sourceSpan, 'hl-source') : s.source}
+                    {s.key && <span className="mt-0.5 block truncate font-mono text-[11px] text-fg-3" title={s.key}>{s.key}</span>}
+                  </div>
                   <div className="col-start-2 min-w-0 md:col-start-auto">
                     {editing === s.id ? (
                       <div onClick={(e) => e.stopPropagation()}>

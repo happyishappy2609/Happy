@@ -1,4 +1,4 @@
-import { ArrowLeft, Calendar, CircleUser, Edit3, FileText, FolderX, Hash, Languages, MoreHorizontal, Pin, PinOff, ScanSearch, Trash2, Upload, UserMinus, UserPlus } from 'lucide-react'
+import { ArrowLeft, Calendar, CircleUser, Edit3, FileText, FolderX, Hash, KeyRound, Languages, MoreHorizontal, Pin, PinOff, ScanSearch, Trash2, Upload, UserMinus, UserPlus } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -170,6 +170,9 @@ export default function ProjectDetailPage() {
               <DropdownContent className="w-56">
                 <DropdownItem icon={<Edit3 />} disabled={!can('project.edit')} onSelect={() => setEditOpen(true)}>
                   Edit project
+                </DropdownItem>
+                <DropdownItem icon={<KeyRound />} onSelect={() => navigate(`/keys?project=${project.id}`)}>
+                  Manage string keys
                 </DropdownItem>
                 <DropdownItem icon={<Upload />} disabled={!can('segment.edit')} onSelect={() => setUploadOpen(true)}>
                   Upload translations
@@ -414,6 +417,11 @@ export default function ProjectDetailPage() {
         </TabsContent>
 
         <TabsContent value="segments">
+          <div className="mb-2 flex justify-end">
+            <Button size="sm" variant="ghost" onClick={() => navigate(`/keys?project=${project.id}`)}>
+              <KeyRound /> Manage string keys
+            </Button>
+          </div>
           <Card className="overflow-hidden">
             <SegmentWorkbench projectId={project.id} focusSegmentId={params.get('segment')} onOpenIssue={setIssue} />
           </Card>

@@ -4,6 +4,7 @@ import { buildSeedData, type AppData } from '@/data/seed'
 import { CURRENT_USER } from '@/data/seed/team'
 import type { QAScanOutput } from '@/services/qa/types'
 import { applyScanResult } from '@/services/scanService'
+import { suggestKey, uniqueKey } from '@/services/stringKeyService'
 import { safeStorage } from '@/services/storageService'
 import type {
   AccessRole,
@@ -67,6 +68,14 @@ export interface ImportedSegment {
   key?: string
 }
 
+export interface StringKeyInput {
+  key: string
+  source: string
+  note?: string
+  maxLength?: number
+  values: Partial<Record<LangCode, string>>
+}
+
 interface Actions {
   signIn: () => void
   signOut: () => void
@@ -84,6 +93,11 @@ interface Actions {
   deleteProject: (id: string) => void
   addProjectFile: (projectId: string, file: Omit<ProjectFile, 'id' | 'projectId' | 'uploadedAt' | 'uploadedBy'>) => void
   importTranslations: (projectId: string, lang: LangCode, segs: ImportedSegment[], file: Pick<ProjectFile, 'name' | 'format' | 'sizeKb'>) => { updated: number; added: number }
+  addStringKey: (projectId: string, input: StringKeyInput, opts?: { silent?: boolean }) => void
+  updateStringKey: (projectId: string, key: string, patch: { key?: string; source?: string; note?: string; maxLength?: number }) => void
+  setKeyValue: (projectId: string, key: string, lang: LangCode, value: string) => void
+  deleteStringKey: (projectId: string, key: string) => void
+  importStringKeys: (projectId: string, rows: ImportedSegment[], lang: LangCode | null) => { created: number; updated: number }
   assignReviewer: (projectId: string, memberId: string) => void
   removeReviewer: (projectId: string, memberId: string) => void
 
@@ -148,7 +162,7 @@ function patchIssue(issues: Issue[], id: string, fn: (i: Issue) => Issue) {
 }
 
 export const STORAGE_KEY = 'lingopilot-demo'
-export const STORAGE_VERSION = 3
+export const STORAGE_VERSION = 4
 
 export const useAppStore = create<AppState>()(
   persist(
@@ -212,6 +226,16 @@ export const useAppStore = create<AppState>()(
             tags: ['New'],
           }
           const segments: Segment[] = []
+          const takenKeys = new Set<string>()
+          const keyBySource = new Map<string, string>()
+          const keyOf = (r: ImportedSegment) => {
+            const existing = keyBySource.get(r.source)
+            if (existing) return existing
+            const k = r.key && /^[A-Za-z0-9_.-]+$/.test(r.key) && !takenKeys.has(r.key) ? (takenKeys.add(r.key), r.key) : suggestKey(r.source, 'strings', takenKeys)
+            takenKeys.add(k)
+            keyBySource.set(r.source, k)
+            return k
+          }
           for (const lang of input.targetLangs) {
             const rows = segmentsByLang?.[lang] ?? []
             rows.forEach((r, i) =>
@@ -223,6 +247,7 @@ export const useAppStore = create<AppState>()(
                 source: r.source,
                 target: r.target,
                 status: r.target.trim() ? 'translated' : 'draft',
+                key: keyOf(r),
               }),
             )
           }
@@ -260,11 +285,14 @@ export const useAppStore = create<AppState>()(
           let added = 0
           const existing = s.segments.filter((x) => x.projectId === projectId && x.lang === lang)
           const bySource = new Map(existing.map((x) => [x.source, x]))
+          const byKey = new Map(existing.filter((x) => x.key).map((x) => [x.key!, x]))
+          const projectKeys = new Set(s.segments.filter((x) => x.projectId === projectId && x.key).map((x) => x.key!))
+          const keyForSource = new Map(s.segments.filter((x) => x.projectId === projectId && x.key).map((x) => [x.source, x.key!]))
           let maxIndex = existing.reduce((m, x) => Math.max(m, x.index), 0)
           const changed = new Map<string, string>()
           const newSegs: Segment[] = []
           for (const r of rows) {
-            const seg = bySource.get(r.source)
+            const seg = (r.key ? byKey.get(r.key) : undefined) ?? bySource.get(r.source)
             if (seg) {
               if (r.target && r.target !== seg.target) {
                 changed.set(seg.id, r.target)
@@ -273,7 +301,10 @@ export const useAppStore = create<AppState>()(
             } else {
               maxIndex++
               added++
-              newSegs.push({ id: `${project.code}-${lang.toUpperCase()}-${String(maxIndex).padStart(3, '0')}`, projectId, lang, index: maxIndex, source: r.source, target: r.target, status: r.target.trim() ? 'translated' : 'draft' })
+              const key = keyForSource.get(r.source) ?? (r.key && !projectKeys.has(r.key) ? r.key : suggestKey(r.source, 'strings', projectKeys))
+              projectKeys.add(key)
+              keyForSource.set(r.source, key)
+              newSegs.push({ id: `${project.code}-${lang.toUpperCase()}-${String(maxIndex).padStart(3, '0')}`, projectId, lang, index: maxIndex, source: r.source, target: r.target, status: r.target.trim() ? 'translated' : 'draft', key })
             }
           }
           set((st) => ({
@@ -283,6 +314,112 @@ export const useAppStore = create<AppState>()(
           }))
           pushActivity(activity('project', `uploaded translations ${file.name} — ${updated} updated, ${added} new segments`, projectId))
           return { updated, added }
+        },
+
+        addStringKey: (projectId, input, opts) => {
+          const s = get()
+          const project = s.projects.find((p) => p.id === projectId)
+          if (!project) return
+          const own = s.segments.filter((x) => x.projectId === projectId)
+          const at = nowIso()
+          const newSegs: Segment[] = project.targetLangs.map((lang) => {
+            const idx = own.filter((x) => x.lang === lang).reduce((m, x) => Math.max(m, x.index), 0) + 1
+            const value = input.values[lang]?.trim() ?? ''
+            return {
+              id: `${project.code}-${lang.toUpperCase()}-${String(idx).padStart(3, '0')}`,
+              projectId,
+              lang,
+              index: idx,
+              source: input.source.trim(),
+              target: value,
+              status: value ? 'translated' : 'draft',
+              key: input.key.trim(),
+              note: input.note?.trim() || undefined,
+              maxLength: input.maxLength || undefined,
+              editedAt: value ? at : undefined,
+              editedBy: value ? ME : undefined,
+            }
+          })
+          set((st) => ({ segments: [...st.segments, ...newSegs] }))
+          if (!opts?.silent) pushActivity(activity('project', `created string key "${input.key.trim()}" in ${project.name}`, projectId))
+        },
+
+        updateStringKey: (projectId, key, patch) => {
+          const at = nowIso()
+          set((st) => ({
+            segments: st.segments.map((x) => {
+              if (x.projectId !== projectId || x.key !== key) return x
+              const sourceChanged = patch.source !== undefined && patch.source.trim() !== x.source
+              return {
+                ...x,
+                key: patch.key?.trim() ?? x.key,
+                source: patch.source !== undefined ? patch.source.trim() : x.source,
+                note: patch.note !== undefined ? patch.note.trim() || undefined : x.note,
+                maxLength: patch.maxLength !== undefined ? patch.maxLength || undefined : x.maxLength,
+                // A changed source needs its translations re-checked.
+                status: sourceChanged && x.target ? 'translated' : x.status,
+                editedAt: sourceChanged ? at : x.editedAt,
+              }
+            }),
+          }))
+          const p = get().projects.find((x) => x.id === projectId)
+          pushActivity(activity('project', patch.key && patch.key !== key ? `renamed string key "${key}" to "${patch.key}"` : `updated string key "${key}"`, p?.id))
+        },
+
+        setKeyValue: (projectId, key, lang, value) => {
+          const s = get()
+          const project = s.projects.find((p) => p.id === projectId)
+          if (!project) return
+          const at = nowIso()
+          const v = value.trim()
+          const seg = s.segments.find((x) => x.projectId === projectId && x.key === key && x.lang === lang)
+          if (seg) {
+            set((st) => ({ segments: st.segments.map((x) => (x.id === seg.id ? { ...x, target: v, status: v ? 'translated' : 'draft', editedAt: at, editedBy: ME } : x)) }))
+            return
+          }
+          const template = s.segments.find((x) => x.projectId === projectId && x.key === key)
+          if (!template) return
+          const idx = s.segments.filter((x) => x.projectId === projectId && x.lang === lang).reduce((m, x) => Math.max(m, x.index), 0) + 1
+          set((st) => ({
+            segments: [
+              ...st.segments,
+              { id: `${project.code}-${lang.toUpperCase()}-${String(idx).padStart(3, '0')}`, projectId, lang, index: idx, source: template.source, target: v, status: v ? 'translated' : 'draft', key, note: template.note, maxLength: template.maxLength, editedAt: at, editedBy: ME },
+            ],
+          }))
+        },
+
+        deleteStringKey: (projectId, key) => {
+          const ids = new Set(get().segments.filter((x) => x.projectId === projectId && x.key === key).map((x) => x.id))
+          set((st) => ({ segments: st.segments.filter((x) => !ids.has(x.id)), issues: st.issues.filter((i) => !ids.has(i.segmentId)) }))
+          pushActivity(activity('project', `deleted string key "${key}"`, projectId))
+        },
+
+        importStringKeys: (projectId, rows, lang) => {
+          const s = get()
+          const project = s.projects.find((p) => p.id === projectId)
+          if (!project) return { created: 0, updated: 0 }
+          const existingKeys = new Set(s.segments.filter((x) => x.projectId === projectId && x.key).map((x) => x.key!))
+          let created = 0
+          let updated = 0
+          const taken = new Set(existingKeys)
+          for (const r of rows) {
+            const key = r.key && /^[A-Za-z0-9_.-]+$/.test(r.key) ? r.key : uniqueKey(`strings.${r.source.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 30)}`, taken)
+            if (existingKeys.has(key)) {
+              if (lang && r.target.trim()) {
+                get().setKeyValue(projectId, key, lang, r.target)
+                updated++
+              } else if (!lang && r.source.trim()) {
+                set((st) => ({ segments: st.segments.map((x) => (x.projectId === projectId && x.key === key && x.source !== r.source.trim() ? { ...x, source: r.source.trim() } : x)) }))
+                updated++
+              }
+            } else {
+              get().addStringKey(projectId, { key, source: r.source || r.target, values: lang ? { [lang]: r.target } : {} }, { silent: true })
+              existingKeys.add(key)
+              created++
+            }
+          }
+          pushActivity(activity('project', `imported string keys — ${created} created, ${updated} updated`, projectId))
+          return { created, updated }
         },
 
         assignReviewer: (projectId, memberId) => {

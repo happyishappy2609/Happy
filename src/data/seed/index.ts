@@ -43,6 +43,44 @@ export interface AppData {
 }
 
 const DAY = 86_400_000
+
+const NS_BY_TYPE: Record<Project['type'], string> = {
+  'Software Localization': 'app',
+  'Website Localization': 'web',
+  'Marketing Content': 'marketing',
+  'Product Documentation': 'docs',
+  'Game Localization': 'game',
+  Legal: 'legal',
+  Medical: 'medical',
+}
+
+/** Deterministic, human-readable resource key per (project, source text). */
+const keyRegistry = new Map<string, string>()
+function keyFor(projectId: string, ns: string, source: string) {
+  const reg = `${projectId}|${source}`
+  const existing = keyRegistry.get(reg)
+  if (existing) return existing
+  const base = `${ns}.${slugKey(source)}`
+  let key = base
+  let n = 2
+  const taken = new Set([...keyRegistry.entries()].filter(([k]) => k.startsWith(`${projectId}|`)).map(([, v]) => v))
+  while (taken.has(key)) key = `${base}_${n++}`
+  keyRegistry.set(reg, key)
+  return key
+}
+
+export function slugKey(source: string) {
+  return (
+    source
+      .toLowerCase()
+      .replace(/\{[^}]*\}|<[^>]*>|%\w/g, ' ')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((w) => w && !['the', 'a', 'an', 'your', 'to', 'of', 'for', 'and', 'is', 'are', 'be', 'in', 'on', 'with'].includes(w))
+      .slice(0, 4)
+      .join('_') || 'string'
+  )
+}
 const NOVA_SEGMENTS = 120
 
 function shuffle<T>(arr: T[], seed: number) {
@@ -62,6 +100,7 @@ function atHour(ts: number, hour: number, minute = 0) {
 }
 
 export function buildSeedData(nowDate = new Date()): AppData {
+  keyRegistry.clear()
   const now = nowDate.getTime()
   const clients = structuredClone(seedClients)
   const team = structuredClone(seedTeam)
@@ -132,6 +171,7 @@ export function buildSeedData(nowDate = new Date()): AppData {
         }
       }
       const ordered = shuffle(entries, hashString(`${p.id}-${lang}`))
+      const nsFor = (src: string) => (CORPUS.some(([c]) => c === src) ? 'common' : p.id === 'p-nova-ecom' && NOVA_CATALOG_TEMPLATES.some(([t]) => src.startsWith(t.split('{P}')[0]!) && src.endsWith(t.split('{P}')[1]!)) ? 'catalog' : NS_BY_TYPE[p.type])
       const reviewedCut = Math.round((p.reviewProgress / 100) * ordered.length)
       ordered.forEach((e, idx) => {
         const n = idx + 1
@@ -143,6 +183,7 @@ export function buildSeedData(nowDate = new Date()): AppData {
           source: e.source,
           target: e.target,
           status: p.status === 'completed' ? 'approved' : !e.flagged && idx < reviewedCut ? 'reviewed' : 'translated',
+          key: keyFor(p.id, nsFor(e.source), e.source),
         })
       })
     }

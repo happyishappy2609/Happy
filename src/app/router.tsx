@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/useAppStore'
 
 const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 const ProjectsPage = lazy(() => import('@/pages/ProjectsPage'))
+const StringKeysPage = lazy(() => import('@/pages/StringKeysPage'))
 const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage'))
 const QualityPage = lazy(() => import('@/pages/QualityPage'))
 const IssuesPage = lazy(() => import('@/pages/IssuesPage'))
@@ -41,6 +42,7 @@ const router = createHashRouter([
       { path: 'dashboard', element: <DashboardPage /> },
       { path: 'projects', element: <ProjectsPage /> },
       { path: 'projects/:id', element: <ProjectDetailPage /> },
+      { path: 'keys', element: <StringKeysPage /> },
       { path: 'quality', element: <QualityPage /> },
       { path: 'issues', element: <IssuesPage /> },
       { path: 'team', element: <TeamPage /> },

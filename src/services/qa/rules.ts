@@ -183,6 +183,20 @@ export function runRuleChecks(segment: Segment, glossary: GlossaryTerm[], client
     })
   }
 
+  // UI length limit set on the string key
+  if (segment.maxLength && target.length > segment.maxLength && !out.some((f) => f.category === 'formatting')) {
+    out.push({
+      ...base,
+      key: `${segment.id}:formatting`,
+      category: 'formatting',
+      severity: 'major',
+      confidence: 99,
+      suggestion: '',
+      explanation: `Translation is ${target.length} characters; the string key allows at most ${segment.maxLength}. It may be truncated in the UI.`,
+      ruleId: 'max-length',
+    })
+  }
+
   // Repeated words
   if (!cjk) {
     const rep = /(^|[\s(])([\p{L}]{2,})\s+\2(?=$|[\s.,;:!?])/iu.exec(target)

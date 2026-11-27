@@ -151,6 +151,22 @@ export interface Segment {
   status: 'draft' | 'translated' | 'reviewed' | 'approved'
   editedAt?: string
   editedBy?: string
+  /** String resource key (e.g. "checkout.title"). Segments of the same project sharing a key are one string in different languages. */
+  key?: string
+  /** Context note for translators. */
+  note?: string
+  /** Maximum allowed target length (UI constraints). */
+  maxLength?: number
+}
+
+/** A string resource key with its source text and one value per target language. */
+export interface StringKeyRow {
+  key: string
+  namespace: string
+  source: string
+  note?: string
+  maxLength?: number
+  values: Partial<Record<LangCode, Segment>>
 }
 
 export interface IssueHistoryEntry {

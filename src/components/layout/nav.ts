@@ -1,4 +1,4 @@
-import { BarChart3, BookText, Building2, Database, FolderKanban, LayoutDashboard, Plug, ScanSearch, Settings, TriangleAlert, Users } from 'lucide-react'
+import { BarChart3, BookText, Building2, Database, FolderKanban, KeyRound, LayoutDashboard, Plug, ScanSearch, Settings, TriangleAlert, Users } from 'lucide-react'
 
 export const NAV_SECTIONS = [
   {
@@ -6,6 +6,7 @@ export const NAV_SECTIONS = [
     items: [
       { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
       { to: '/projects', label: 'Projects', icon: FolderKanban },
+      { to: '/keys', label: 'String Keys', icon: KeyRound },
       { to: '/quality', label: 'AI Quality', icon: ScanSearch },
       { to: '/issues', label: 'Issues', icon: TriangleAlert, badge: 'issues' as const },
       { to: '/team', label: 'Linguists & Reviewers', icon: Users },
@@ -30,6 +31,7 @@ export const NAV_SECTIONS = [
 export const ROUTE_LABELS: Record<string, string> = {
   dashboard: 'Overview',
   projects: 'Projects',
+  keys: 'String Keys',
   quality: 'AI Quality',
   issues: 'Issues',
   team: 'Linguists & Reviewers',
