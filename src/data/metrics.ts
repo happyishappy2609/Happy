@@ -39,7 +39,7 @@ export function getDailySeries(today = new Date()): DailyMetric[] {
       words,
       quality,
       automation,
-      hoursSaved: (words / 1000) * (automation / 100) * 0.145,
+      hoursSaved: (words / 1000) * 0.145 * (0.97 + rng() * 0.06),
       scans: Math.max(1, Math.round(words / 4200 + (rng() - 0.5) * 3)),
       activeProjects: interp([[0, 24], [7, 23.2], [30, 21.43], [90, 19.5], [DAYS, 16]], d),
       criticalOpen: interp([[0, 18], [7, 20.1], [30, 23.4], [90, 26.5], [DAYS, 29]], d),

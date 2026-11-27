@@ -75,7 +75,7 @@ export const isOpen = (i: Issue) => i.status === 'open' || i.status === 'in_revi
 /** Scaling so that small batches don't get punished disproportionately. Reference batch = 120 segments. */
 export function penaltyFactor(segmentCount: number) {
   if (segmentCount <= 0) return 1
-  return Math.min(1.5, Math.max(0.5, 120 / segmentCount))
+  return Math.min(1.2, Math.max(0.5, 120 / segmentCount))
 }
 
 export function issuePenalty(issues: Issue[], weights = DEFAULT_SEVERITY_WEIGHTS) {

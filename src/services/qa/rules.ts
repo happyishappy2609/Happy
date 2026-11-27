@@ -58,6 +58,17 @@ const END_CHAR: Record<EndClass, { latin: string; cjk: string }> = {
 
 const REFLEXIVE_OK = new Set(['nous', 'vous', 'sie'])
 
+const NEGATION_MARKERS: Partial<Record<LangCode, string[]>> = {
+  fr: ['ne', "n'", 'pas', 'jamais', 'aucun', 'aucune', 'sans', 'non'],
+  de: ['nicht', 'kein', 'keine', 'keinem', 'keinen', 'keiner', 'nie', 'niemals', 'ohne'],
+  es: ['no', 'nunca', 'sin', 'ningún', 'ninguna'],
+  it: ['non', 'mai', 'senza', 'nessun', 'nessuna'],
+  pt: ['não', 'nunca', 'sem', 'nenhum', 'nenhuma'],
+  ja: ['ない', 'ません', '不', '無', '禁止', 'できず'],
+  ko: ['없', '않', '못', '마십시오', '말', '금지'],
+  zh: ['不', '没', '无', '勿', '禁止', '未'],
+}
+
 function escapeRe(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
@@ -187,6 +198,25 @@ export function runRuleChecks(segment: Segment, glossary: GlossaryTerm[], client
         targetSpan: `${word} ${word}`,
         explanation: `Repeated word "${word}".`,
         ruleId: 'repeated',
+      })
+    }
+  }
+
+  // Negation loss heuristic (EN source)
+  const neg = NEGATION_MARKERS[lang]
+  if (neg && /\b(not|cannot|can't|don't|doesn't|won't|never)\b/i.test(source)) {
+    const t = target.toLowerCase()
+    const hasNeg = neg.some((m) => (cjk ? t.includes(m) : new RegExp(`(^|[^\\p{L}])${escapeRe(m)}($|[^\\p{L}])`, 'iu').test(t) || (m.endsWith("'") && t.includes(m))))
+    if (!hasNeg) {
+      out.push({
+        ...base,
+        key: `${segment.id}:accuracy`,
+        category: 'accuracy',
+        severity: 'major',
+        confidence: 74,
+        suggestion: '',
+        explanation: 'The source contains a negation that does not appear in the target. The meaning may be reversed — verify with a linguist.',
+        ruleId: 'negation',
       })
     }
   }

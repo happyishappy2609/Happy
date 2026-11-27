@@ -39,6 +39,7 @@ export interface AppData {
   integrations: Integration[]
   files: ProjectFile[]
   settings: WorkspaceSettings
+  seededAt: number
 }
 
 const DAY = 86_400_000
@@ -92,6 +93,7 @@ export function buildSeedData(nowDate = new Date()): AppData {
       qualityHistory: [],
       description: p.description,
       tags: p.tags,
+      pinned: i < 5,
     }
   })
 
@@ -300,5 +302,6 @@ export function buildSeedData(nowDate = new Date()): AppData {
     integrations: buildIntegrations(now),
     files,
     settings: structuredClone(defaultSettings),
+    seededAt: now,
   }
 }

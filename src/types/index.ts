@@ -138,6 +138,7 @@ export interface Project {
   qualityHistory: { date: string; score: number; label: string }[]
   description?: string
   tags?: string[]
+  pinned?: boolean
 }
 
 export interface Segment {
