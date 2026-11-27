@@ -219,14 +219,16 @@ export function buildSeedData(nowDate = new Date()): AppData {
   const scanDefs: [projectId: string, lang: LangCode, hoursAgo: number, by: string][] = [
     ['p-aurora-app', 'de', 0.6, 'u-alex'],
     ['p-orbit-gaming', 'ko', 8.4, 'm-emma'],
-    ['p-nova-ecom', 'fr', 72, 'u-alex'],
+    ['p-nova-ecom', 'fr', 40, 'u-alex'],
     ['p-helix-health', 'es', 50, 'm-priya'],
     ['p-finedge-platform', 'ja', 120, 'm-kenji'],
-    ['p-helix-portal', 'pt', 30, 'm-priya'],
+    ['p-helix-portal', 'pt', 20, 'm-priya'],
   ]
   const scans: QAScan[] = scanDefs.map(([projectId, lang, h, by], i) => {
     const p = projects.find((x) => x.id === projectId)!
-    const own = issues.filter((x) => x.projectId === projectId && x.lang === lang && x.detectedBy !== 'reviewer')
+    const completedTs = now - h * 3_600_000
+    // A scan only reports issues that were still open when it ran.
+    const own = issues.filter((x) => x.projectId === projectId && x.lang === lang && x.detectedBy !== 'reviewer' && new Date(x.createdAt).getTime() <= completedTs && (x.status === 'open' || (x.resolvedAt && new Date(x.resolvedAt).getTime() > completedTs)))
     const sev: Record<Severity, number> = { critical: 0, major: 0, minor: 0, info: 0 }
     const cats: QAScan['summary']['categories'] = {}
     for (const x of own) {
@@ -236,7 +238,7 @@ export function buildSeedData(nowDate = new Date()): AppData {
     const segs = segments.filter((s) => s.projectId === projectId && s.lang === lang)
     const stats = computeProjectStats(p, issues, segCount(projectId))
     const score = stats.langScores[lang] ?? stats.score
-    const completed = now - h * 3_600_000
+    const completed = completedTs
     const id = `SC-${8101 + i}`
     for (const x of own) if (!x.scanId) x.scanId = id
     return {

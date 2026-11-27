@@ -6,7 +6,7 @@ export const Tabs = T.Root
 export const TabsContent = T.Content
 
 export function TabsList({ children, className }: { children: ReactNode; className?: string }) {
-  return <T.List className={cn('flex items-center gap-1 overflow-x-auto border-b border-border scrollbar-thin', className)}>{children}</T.List>
+  return <T.List className={cn('relative flex items-center gap-1 overflow-x-auto border-b border-border scrollbar-thin', className)}>{children}</T.List>
 }
 
 export function TabsTrigger({ value, children, count }: { value: string; children: ReactNode; count?: number }) {
@@ -24,7 +24,7 @@ export function TabsTrigger({ value, children, count }: { value: string; childre
 /** Compact pill-style segmented control. */
 export function Segmented<T extends string>({ value, onChange, options, className, size = 'md', 'aria-label': ariaLabel }: { value: T; onChange: (v: T) => void; options: { value: T; label: ReactNode; count?: number }[]; className?: string; size?: 'sm' | 'md'; 'aria-label'?: string }) {
   return (
-    <div role="radiogroup" aria-label={ariaLabel} className={cn('inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-lg bg-subtle p-0.5 scrollbar-thin', className)}>
+    <div role="radiogroup" aria-label={ariaLabel} className={cn('relative inline-flex max-w-full items-center gap-0.5 overflow-x-auto rounded-lg bg-subtle p-0.5 scrollbar-thin', className)}>
       {options.map((o) => (
         <button
           key={o.value}

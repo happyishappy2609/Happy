@@ -320,6 +320,8 @@ export interface WorkspaceSettings {
   defaultLanguage: LangCode
   defaultCurrency: string
   logoInitials: string
+  logoDataUrl?: string
+  plan: 'growth' | 'scale' | 'enterprise'
   defaultThreshold: number
   severityWeights: Record<Severity, number>
   defaultRules: QARuleId[]

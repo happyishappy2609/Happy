@@ -97,7 +97,7 @@ export function Stat({ label, value, className }: { label: ReactNode; value: Rea
   return (
     <div className={cn('min-w-0', className)}>
       <div className="text-[12px] text-fg-3">{label}</div>
-      <div className="mt-0.5 truncate text-[13.5px] font-medium text-fg">{value}</div>
+      <div className="mt-0.5 text-[13.5px] font-medium break-words text-fg">{value}</div>
     </div>
   )
 }

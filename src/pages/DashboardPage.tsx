@@ -52,7 +52,7 @@ export function DashboardPage() {
         }
       />
 
-      <section aria-label="Key metrics" className="grid grid-cols-1 gap-3 min-[460px]:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+      <section aria-label="Key metrics" className="grid grid-cols-2 gap-3 lg:grid-cols-3 2xl:grid-cols-6">
         <KPIStatCard label="Active Projects" icon={<FolderKanban />} value={formatNumber(m.kpis.activeProjects.value)} delta={m.kpis.activeProjects.delta} comparison={comparison} spark={m.kpis.activeProjects.spark} onClick={() => navigate('/projects?status=active')} />
         <KPIStatCard label="Words Processed" icon={<FileText />} value={formatCompact(m.kpis.words.value)} delta={m.kpis.words.delta} comparison={comparison} spark={m.kpis.words.spark} tooltip="Source words translated, reviewed or QA-scanned in the selected period." />
         <KPIStatCard label="Average Quality Score" icon={<Gauge />} value={`${m.kpis.quality.value.toFixed(1)}%`} delta={m.kpis.quality.delta} deltaDigits={1} comparison={comparison} spark={m.kpis.quality.spark} tooltip={`Mean score across active projects. ${QUALITY_SCORE_TOOLTIP}`} onClick={() => navigate('/analytics')} />
@@ -100,7 +100,7 @@ export function DashboardPage() {
               </Link>
             }
           />
-          <div className="overflow-x-auto scrollbar-thin">
+          <div className="relative overflow-x-auto scrollbar-thin">
             <table className="w-full min-w-[720px] text-[13px]">
               <thead>
                 <tr className="border-y border-border bg-subtle/60 text-left text-[11.5px] text-fg-2">

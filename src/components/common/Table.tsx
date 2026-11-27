@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/utils/cn'
 
 export function TableWrap({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('w-full overflow-x-auto scrollbar-thin', className)}>{children}</div>
+  return <div className={cn('relative w-full overflow-x-auto scrollbar-thin', className)}>{children}</div>
 }
 
 export function Table({ className, ...p }: HTMLAttributes<HTMLTableElement>) {
