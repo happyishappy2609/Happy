@@ -25,9 +25,22 @@ const col = createColumnHelper<Row>()
 export function ProjectTable({ projects, statsMap, emptyAction, pageSize = 10 }: { projects: Project[]; statsMap: Map<string, ProjectStats>; emptyAction?: ReactNode; pageSize?: number }) {
   const navigate = useNavigate()
   const { clientById, memberById } = useLookups()
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'deadline', desc: false }])
+  const [sorting, setSorting] = useState<SortingState>([])
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize })
-  const data = useMemo(() => projects.map((p) => ({ p, st: statsMap.get(p.id)! })).filter((r) => r.st), [projects, statsMap])
+  // Default order: open work first by deadline, then delivered projects (most recent first).
+  const data = useMemo(
+    () =>
+      projects
+        .map((p) => ({ p, st: statsMap.get(p.id)! }))
+        .filter((r) => r.st)
+        .sort((a, b) => {
+          const ca = a.p.status === 'completed' ? 1 : 0
+          const cb = b.p.status === 'completed' ? 1 : 0
+          if (ca !== cb) return ca - cb
+          return ca ? b.p.deadline.localeCompare(a.p.deadline) : a.p.deadline.localeCompare(b.p.deadline)
+        }),
+    [projects, statsMap],
+  )
 
   const columns = useMemo(
     () => [
@@ -35,7 +48,7 @@ export function ProjectTable({ projects, statsMap, emptyAction, pageSize = 10 }:
         id: 'project',
         header: 'Project',
         cell: ({ row: { original: r } }) => (
-          <div className="min-w-[190px]">
+          <div className="min-w-[160px]">
             <div className="flex items-center gap-1.5 font-medium text-fg">
               {r.p.name}
               {r.p.pinned && <Pin className="size-3 text-fg-3" aria-label="Pinned" />}
@@ -46,13 +59,13 @@ export function ProjectTable({ projects, statsMap, emptyAction, pageSize = 10 }:
           </div>
         ),
       }),
-      col.accessor((r) => clientById.get(r.p.clientId)?.name ?? '', { id: 'client', header: 'Client', cell: (i) => <span className="whitespace-nowrap text-fg-2">{i.getValue()}</span> }),
+      col.accessor((r) => clientById.get(r.p.clientId)?.name ?? '', { id: 'client', header: 'Client', cell: (i) => <span className="block max-w-[120px] leading-snug text-fg-2">{i.getValue()}</span> }),
       col.accessor((r) => r.p.sourceLang, { id: 'source', header: 'Source', enableSorting: false, cell: (i) => <LangChip lang={i.getValue()} /> }),
       col.accessor((r) => r.p.targetLangs.length, {
         id: 'targets',
         header: 'Target Languages',
         cell: ({ row: { original: r } }) => (
-          <div className="flex max-w-[150px] flex-wrap gap-1" title={r.p.targetLangs.map(langShort).join(', ')}>
+          <div className="flex max-w-[110px] flex-wrap gap-1" title={r.p.targetLangs.map(langShort).join(', ')}>
             {r.p.targetLangs.slice(0, 3).map((l) => (
               <LangChip key={l} lang={l} />
             ))}
@@ -65,9 +78,9 @@ export function ProjectTable({ projects, statsMap, emptyAction, pageSize = 10 }:
         id: 'progress',
         header: 'Progress',
         cell: (i) => (
-          <div className="flex w-28 items-center gap-2">
-            <ProgressBar value={i.getValue()} size="sm" tone={i.getValue() === 100 ? 'success' : 'primary'} label="Progress" />
-            <span className="w-8 text-right text-[12px] text-fg-2 tabular">{i.getValue()}%</span>
+          <div className="w-[72px]">
+            <span className="text-[12px] text-fg-2 tabular">{i.getValue()}%</span>
+            <ProgressBar value={i.getValue()} size="sm" tone={i.getValue() === 100 ? 'success' : 'primary'} label="Progress" className="mt-1" />
           </div>
         ),
       }),
@@ -76,9 +89,9 @@ export function ProjectTable({ projects, statsMap, emptyAction, pageSize = 10 }:
         id: 'issues',
         header: 'Issues',
         cell: ({ row: { original: r } }) => (
-          <span className="flex items-center gap-1.5 whitespace-nowrap tabular">
+          <span className="flex flex-col items-start gap-0.5 whitespace-nowrap tabular">
             <span className="text-fg">{r.st.open}</span>
-            {r.st.openBySeverity.critical > 0 && <span className="rounded bg-error-soft px-1 text-[11px] font-medium text-error">{r.st.openBySeverity.critical} crit</span>}
+            {r.st.openBySeverity.critical > 0 && <span className="rounded bg-error-soft px-1 text-[11px] font-medium text-error">{r.st.openBySeverity.critical} critical</span>}
           </span>
         ),
       }),
@@ -135,7 +148,7 @@ export function ProjectTable({ projects, statsMap, emptyAction, pageSize = 10 }:
   return (
     <>
       <TableWrap className="hidden md:block">
-        <Table>
+        <Table className="[&_td]:px-2.5 [&_th]:px-2.5">
           <thead>
             {table.getHeaderGroups().map((hg) => (
               <tr key={hg.id}>
