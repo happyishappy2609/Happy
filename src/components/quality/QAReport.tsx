@@ -44,7 +44,7 @@ export function QAReportSummary({ scan, threshold, compact }: { scan: QAScan; th
   const cats = Object.entries(s.categories).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
   const maxCat = Math.max(1, ...cats.map(([, v]) => v ?? 0))
   return (
-    <div className={cn('grid gap-4', compact ? 'lg:grid-cols-[220px_1fr_1fr]' : 'md:grid-cols-[230px_1fr]')}>
+    <div className={cn('grid gap-4', compact ? 'md:grid-cols-[220px_1fr] xl:grid-cols-[220px_minmax(0,1.15fr)_minmax(0,1fr)]' : 'md:grid-cols-[230px_1fr]')}>
       <div className="flex flex-col justify-between rounded-[12px] border border-border bg-subtle/50 p-4">
         <div>
           <div className="flex items-center gap-1 text-[12px] font-medium text-fg-2">
@@ -66,7 +66,7 @@ export function QAReportSummary({ scan, threshold, compact }: { scan: QAScan; th
       </div>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className={cn('grid grid-cols-2 gap-3', compact ? 'sm:grid-cols-4 xl:grid-cols-2' : 'sm:grid-cols-4')}>
           {[
             { icon: Layers, label: 'Total segments', value: formatNumber(s.totalSegments) },
             { icon: ScanSearch, label: 'Issues detected', value: formatNumber(s.issuesDetected) },
@@ -87,12 +87,12 @@ export function QAReportSummary({ scan, threshold, compact }: { scan: QAScan; th
         </div>
       </div>
 
-      <div className={cn('rounded-[10px] border border-border p-3', !compact && 'md:col-span-2')}>
+      <div className={cn('rounded-[10px] border border-border p-3', compact ? 'md:col-span-2 xl:col-span-1' : 'md:col-span-2')}>
         <div className="mb-2 text-[12px] font-medium text-fg-2">Category breakdown</div>
         {cats.length === 0 ? (
           <p className="text-[12.5px] text-fg-3">No issues detected.</p>
         ) : (
-          <ul className={cn('grid gap-x-6 gap-y-1.5', !compact && 'sm:grid-cols-2')}>
+          <ul className={cn('grid gap-x-6 gap-y-1.5', compact ? 'sm:grid-cols-2 xl:grid-cols-1' : 'sm:grid-cols-2')}>
             {cats.map(([k, v]) => (
               <li key={k} className="flex items-center gap-2 text-[12.5px]">
                 <span className="w-28 shrink-0 truncate text-fg-2">{CATEGORY_LABELS[k as keyof typeof CATEGORY_LABELS]}</span>
